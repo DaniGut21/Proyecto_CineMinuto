@@ -1,0 +1,55 @@
+:root {
+  --azul-oscuro: #002244;
+  --azul-principal: #003366;
+  --azul-claro: #0055a5;
+  --amarillo-principal: #ffcc00;
+  --amarillo-hover: #e6b800;
+  --blanco: #ffffff;
+  --gris-fondo: #f4f6f9;
+  --texto-oscuro: #1a202c;
+  --borde-suave: #e2e8f0;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+body {
+  background-color: var(--gris-fondo);
+  color: var(--texto-oscuro);
+}
+
+/* Botones institucionales */
+.btn-amarillo {
+  background-color: var(--amarillo-principal);
+  color: var(--azul-oscuro);
+  font-weight: 700;
+  border: none;
+  padding: 0.65rem 1.2rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.1s;
+}
+
+.btn-amarillo:hover {
+  background-color: var(--amarillo-hover);
+  transform: translateY(-1px);
+}
+
+.btn-azul {
+  background-color: var(--azul-principal);
+  color: var(--blanco);
+  font-weight: 600;
+  border: none;
+  padding: 0.65rem 1.2rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.btn-azul:hover {
+  background-color: var(--azul-claro);
+}

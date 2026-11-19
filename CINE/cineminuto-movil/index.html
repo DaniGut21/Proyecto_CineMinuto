@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CineMinuto App Móvil</title>
+
+  <link rel="stylesheet" href="https://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.css" />
+  <script src="https://code.jquery.com/jquery-1.11.3.min.js"></script>
+  <script src="https://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.js"></script>
+
+  <style>
+    .header-cine {
+      background-color: #003366 !important;
+      color: #ffffff !important;
+      border-bottom: 4px solid #ffcc00 !important;
+      text-shadow: none !important;
+    }
+    .btn-amarillo-jqm {
+      background-color: #ffcc00 !important;
+      color: #002244 !important;
+      font-weight: bold !important;
+      text-shadow: none !important;
+      border: none !important;
+    }
+    .btn-azul-jqm {
+      background-color: #003366 !important;
+      color: #ffffff !important;
+      text-shadow: none !important;
+      border: none !important;
+    }
+    .badge-estado {
+      background-color: #ffcc00;
+      color: #002244;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+    .badge-pronto {
+      background-color: #334155;
+      color: #ffffff;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+    .card-movil {
+      background: #ffffff;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 14px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+      border-top: 4px solid #003366;
+    }
+    .grid-sillas-movil {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 5px;
+      margin: 10px 0;
+    }
+    .silla-btn-movil {
+      padding: 8px 2px;
+      border-radius: 5px;
+      border: 1px solid #cbd5e1;
+      font-weight: bold;
+      font-size: 0.75rem;
+      text-align: center;
+      cursor: pointer;
+    }
+    .silla-libre { background-color: #e2e8f0; color: #002244; }
+    .silla-seleccionada { background-color: #ffcc00; color: #002244; border-color: #003366; }
+    .silla-ocupada { background-color: #94a3b8; color: #ffffff; cursor: not-allowed; }
+  </style>
+</head>
+<body>
+
+  <!-- PÁGINA 1: CARTELERA MÓVIL -->
+  <div data-role="page" id="page-cartelera">
+    <div data-role="header" data-position="fixed" class="header-cine">
+      <h1>🎬 CineMinuto</h1>
+      <a href="#page-carrito" class="ui-btn-right btn-amarillo-jqm" id="badge-carrito-header">🛒 (0)</a>
+    </div>
+
+    <div role="main" class="ui-content" style="background-color: #f4f6f9;">
+      <h3 style="color: #003366; border-left: 4px solid #ffcc00; padding-left: 8px;">Cartelera</h3>
+      <input type="search" id="buscador-peliculas-movil" placeholder="🔍 Buscar película..." />
+      <div id="lista-peliculas-movil">
+        <p>Cargando cartelera...</p>
+      </div>
+    </div>
+
+    <div data-role="footer" data-position="fixed">
+      <div data-role="navbar">
+        <ul>
+          <li><a href="#page-cartelera" class="ui-btn-active ui-state-persist" data-icon="video">Cartelera</a></li>
+          <li><a href="#page-comidas" data-icon="shop">Comidas</a></li>
+          <li><a href="#page-carrito" data-icon="check">Carrito</a></li>
+          <li><a href="#page-cuenta" data-icon="user">Cuenta</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- PÁGINA 1B: SELECCIÓN DE SILLAS MÓVIL -->
+  <div data-role="page" id="page-sillas">
+    <div data-role="header" data-position="fixed" class="header-cine">
+      <a href="#page-cartelera" data-icon="back" class="btn-azul-jqm">Volver</a>
+      <h1>🎟 Elegir Sillas</h1>
+    </div>
+
+    <div role="main" class="ui-content" style="background-color: #f4f6f9;">
+      <div class="card-movil">
+        <h3 style="color: #003366; margin-top: 0;" id="sillas-titulo-peli"></h3>
+
+        <label for="sillas-select-sala" style="font-size: 0.85rem; font-weight: bold;">Tipo de Sala:</label>
+        <select id="sillas-select-sala" data-mini="true"></select>
+
+        <label for="sillas-select-horario" style="font-size: 0.85rem; font-weight: bold;">Horario:</label>
+        <select id="sillas-select-horario" data-mini="true">
+          <option value="2:00 PM">2:00 PM (Doblada)</option>
+          <option value="4:30 PM">4:30 PM (Subtitulada)</option>
+          <option value="7:15 PM">7:15 PM (Doblada)</option>
+          <option value="9:45 PM">9:45 PM (Subtitulada)</option>
+        </select>
+
+        <div style="background:#003366; color:white; text-align:center; padding:5px; border-radius:4px; font-size:0.75rem; letter-spacing:2px; margin-top:10px;">
+          PANTALLA
+        </div>
+
+        <div id="mapa-sillas-movil" class="grid-sillas-movil"></div>
+
+        <div style="font-size:0.75rem; text-align:center; margin-bottom:10px;">
+          ⬜ Disponible &nbsp; 🟨 Seleccionada &nbsp; ⬛ Ocupada
+        </div>
+
+        <p style="font-weight: bold; color: #003366;" id="resumen-sillas-movil">Sillas: Ninguna | Total: $0</p>
+
+        <button id="btn-confirmar-sillas-movil" class="ui-btn ui-corner-all btn-amarillo-jqm">
+          Agregar Boletas al Carrito
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PÁGINA 2: COMIDAS -->
+  <div data-role="page" id="page-comidas">
+    <div data-role="header" data-position="fixed" class="header-cine">
+      <h1>🍿 Comidas</h1>
+      <a href="#page-carrito" class="ui-btn-right btn-amarillo-jqm" id="badge-carrito-comidas">🛒 (0)</a>
+    </div>
+
+    <div role="main" class="ui-content" style="background-color: #f4f6f9;">
+      <h3 style="color: #003366; border-left: 4px solid #ffcc00; padding-left: 8px;">Confitería, Pizza y Sushi</h3>
+      <div id="lista-comidas-movil">
+        <p>Cargando menú...</p>
+      </div>
+    </div>
+
+    <div data-role="footer" data-position="fixed">
+      <div data-role="navbar">
+        <ul>
+          <li><a href="#page-cartelera" data-icon="video">Cartelera</a></li>
+          <li><a href="#page-comidas" class="ui-btn-active ui-state-persist" data-icon="shop">Comidas</a></li>
+          <li><a href="#page-carrito" data-icon="check">Carrito</a></li>
+          <li><a href="#page-cuenta" data-icon="user">Cuenta</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- PÁGINA 3: CARRITO -->
+  <div data-role="page" id="page-carrito">
+    <div data-role="header" data-position="fixed" class="header-cine">
+      <h1>🛒 Tu Carrito</h1>
+    </div>
+
+    <div role="main" class="ui-content" style="background-color: #f4f6f9;">
+      <div id="aviso-usuario-carrito" class="card-movil" style="font-size: 0.9rem;"></div>
+      <div id="contenedor-carrito-movil"></div>
+
+      <div class="card-movil" style="text-align: right;">
+        <h3 style="color: #003366;">Total: $<span id="total-carrito-movil">0</span></h3>
+        <button id="btn-pagar-movil" class="ui-btn ui-corner-all btn-amarillo-jqm">Confirmar y Pagar</button>
+      </div>
+    </div>
+
+    <div data-role="footer" data-position="fixed">
+      <div data-role="navbar">
+        <ul>
+          <li><a href="#page-cartelera" data-icon="video">Cartelera</a></li>
+          <li><a href="#page-comidas" data-icon="shop">Comidas</a></li>
+          <li><a href="#page-carrito" class="ui-btn-active ui-state-persist" data-icon="check">Carrito</a></li>
+          <li><a href="#page-cuenta" data-icon="user">Cuenta</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- PÁGINA 4: CUENTA -->
+  <div data-role="page" id="page-cuenta">
+    <div data-role="header" data-position="fixed" class="header-cine">
+      <h1>👤 Mi Cuenta</h1>
+    </div>
+
+    <div role="main" class="ui-content" style="background-color: #f4f6f9;">
+      <div id="zona-sesion-activa" style="display: none;">
+        <div class="card-movil" style="text-align: center;">
+          <span class="badge-estado" id="rol-usuario-movil">CLIENTE</span>
+          <h3 style="color: #003366; margin: 8px 0 4px;" id="nombre-usuario-movil"></h3>
+          <p style="color: #64748b; font-size: 0.9rem;" id="correo-usuario-movil"></p>
+          <button id="btn-cerrar-sesion-movil" class="ui-btn ui-mini ui-corner-all btn-azul-jqm">Cerrar Sesión</button>
+        </div>
+
+        <h4 style="color: #003366; border-left: 4px solid #ffcc00; padding-left: 8px;">Mis Boletas y Compras</h4>
+        <div id="historial-movil-lista"></div>
+      </div>
+
+      <div id="zona-login-movil" class="card-movil">
+        <h3 style="color: #003366; text-align: center;" id="titulo-auth-movil">Iniciar Sesión</h3>
+        <form id="form-auth-movil">
+          <div id="campo-nombre-registro" style="display: none;">
+            <label for="auth-nombre">Nombre Completo:</label>
+            <input type="text" id="auth-nombre" placeholder="Tu nombre" />
+          </div>
+
+          <label for="auth-correo">Correo:</label>
+          <input type="email" id="auth-correo" required placeholder="tu@correo.com" />
+
+          <label for="auth-password">Contraseña:</label>
+          <input type="password" id="auth-password" required placeholder="••••••••" />
+
+          <button type="submit" class="ui-btn ui-corner-all btn-amarillo-jqm" id="btn-submit-auth-movil">Ingresar</button>
+        </form>
+
+        <p style="text-align: center; font-size: 0.85rem; margin-top: 10px;">
+          <a href="#" id="toggle-modo-auth" style="color: #003366; font-weight: bold;">¿No tienes cuenta? Regístrate aquí</a>
+        </p>
+      </div>
+    </div>
+
+    <div data-role="footer" data-position="fixed">
+      <div data-role="navbar">
+        <ul>
+          <li><a href="#page-cartelera" data-icon="video">Cartelera</a></li>
+          <li><a href="#page-comidas" data-icon="shop">Comidas</a></li>
+          <li><a href="#page-carrito" data-icon="check">Carrito</a></li>
+          <li><a href="#page-cuenta" class="ui-btn-active ui-state-persist" data-icon="user">Cuenta</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = "http://localhost:8000/api";
+    let peliculasCacheMovil = [];
+    let salasCacheMovil = [];
+    let carritoMovil = [];
+    let usuarioMovil = JSON.parse(localStorage.getItem("usuarioMovilCineMinuto")) || null;
+    let modoRegistroMovil = false;
+
+    // Estado para selección de sillas en móvil
+    let peliActualSillas = null;
+    let sillasOcupadasMovil = [];
+    let sillasElegidasMovil = [];
+
+    function actualizarContadoresCarrito() {
+      const texto = `🛒 (${carritoMovil.length})`;
+      $("#badge-carrito-header, #badge-carrito-comidas").text(texto);
+      renderizarCarritoMovil();
+    }
+
+    function agregarItemMovil(nombre, precio, reservaSillas = null) {
+      carritoMovil.push({ nombre, precio: Number(precio), reservaSillas });
+      actualizarContadoresCarrito();
+      alert(`"${nombre}" agregado al carrito`);
+    }
+
+    function abrirSelectorSillasMovil(peliculaId) {
+      peliActualSillas = peliculasCacheMovil.find(p => p.id === peliculaId);
+      if (!peliActualSillas) return;
+
+      $("#sillas-titulo-peli").text(`🎬 ${peliActualSillas.titulo}`);
+
+      const selectSala = $("#sillas-select-sala");
+      selectSala.empty();
+      salasCacheMovil.forEach(s => {
+        selectSala.append(`<option value="${s.nombre}|${s.precio}">${s.nombre} ($${Number(s.precio).toLocaleString()})</option>`);
+      });
+
+      $.mobile.changePage("#page-sillas");
+      selectSala.selectmenu("refresh", true);
+      $("#sillas-select-horario").val("4:30 PM").selectmenu("refresh", true);
+      consultarSillasMovil();
+    }
+
+    function consultarSillasMovil() {
+      if (!peliActualSillas) return;
+      const [salaNombre] = ($("#sillas-select-sala").val() || "2D General|15000").split("|");
+      const horario = $("#sillas-select-horario").val() || "4:30 PM";
+
+      $.get(`${API_URL}/sillas`, {
+        pelicula_id: peliActualSillas.id,
+        sala_nombre: salaNombre,
+        horario: horario
+      }, function (ocupadas) {
+        sillasOcupadasMovil = ocupadas;
+        sillasElegidasMovil = [];
+        dibujarMapaSillasMovil();
+      });
+    }
+
+    function dibujarMapaSillasMovil() {
+      const mapa = $("#mapa-sillas-movil");
+      mapa.empty();
+      const filas = ["A", "B", "C", "D"];
+      const cols = [1, 2, 3, 4, 5, 6];
+
+      filas.forEach(f => {
+        cols.forEach(c => {
+          const codigo = `${f}${c}`;
+          const ocupada = sillasOcupadasMovil.includes(codigo);
+          const elegida = sillasElegidasMovil.includes(codigo);
+          const clase = ocupada ? "silla-ocupada" : elegida ? "silla-seleccionada" : "silla-libre";
+          mapa.append(`<div class="silla-btn-movil ${clase}" onclick="toggleSillaMovil('${codigo}')">${codigo}</div>`);
+        });
+      });
+
+      const [, precioStr] = ($("#sillas-select-sala").val() || "2D General|15000").split("|");
+      const total = sillasElegidasMovil.length * Number(precioStr);
+      $("#resumen-sillas-movil").text(
+        `Sillas: ${sillasElegidasMovil.length ? sillasElegidasMovil.join(", ") : "Ninguna"} | Total: $${total.toLocaleString()}`
+      );
+    }
+
+    function toggleSillaMovil(codigo) {
+      if (sillasOcupadasMovil.includes(codigo)) return;
+      if (sillasElegidasMovil.includes(codigo)) {
+        sillasElegidasMovil = sillasElegidasMovil.filter(s => s !== codigo);
+      } else {
+        sillasElegidasMovil.push(codigo);
+      }
+      dibujarMapaSillasMovil();
+    }
+
+    function renderizarPeliculasMovil(filtroTexto = "") {
+      const contenedor = $("#lista-peliculas-movil");
+      contenedor.empty();
+
+      const filtradas = peliculasCacheMovil.filter(p =>
+        p.titulo.toLowerCase().includes(filtroTexto.toLowerCase())
+      );
+
+      if (filtradas.length === 0) {
+        contenedor.append('<div class="card-movil"><p>No se encontraron películas.</p></div>');
+        return;
+      }
+
+      filtradas.forEach(p => {
+        const esPronto = p.estado && p.estado.toLowerCase() === "pronto";
+        const claseBadge = esPronto ? "badge-pronto" : "badge-estado";
+
+        const botonCompra = esPronto
+          ? `<button class="ui-btn ui-corner-all" disabled style="background:#e2e8f0; color:#64748b; text-shadow:none;">⏳ Próximamente en Cartelera</button>`
+          : `<button class="ui-btn ui-corner-all btn-amarillo-jqm" onclick="abrirSelectorSillasMovil(${p.id})">🎟 Elegir Sala, Sillas y Comprar</button>`;
+
+        contenedor.append(`
+          <div class="card-movil">
+            <span class="${claseBadge}">${p.estado}</span>
+            <h3 style="color:#003366; margin: 8px 0 4px;">${p.titulo}</h3>
+            <p style="font-size:0.85rem; color:#64748b;">⏱ ${p.duracion}</p>
+            <img src="${p.imagen}" alt="${p.titulo}" style="width:100%; max-height:260px; object-fit:cover; border-radius:6px; margin:8px 0;" />
+            <p style="font-size:0.9rem; color:#334155;">${p.sinopsis || ""}</p>
+            <a href="${p.trailer_url || 'https://www.youtube.com'}" target="_blank" class="ui-btn ui-mini ui-corner-all" style="background:#dc2626; color:white; text-shadow:none;">▶ Ver Tráiler en YouTube</a>
+            ${botonCompra}
+          </div>
+        `);
+      });
+    }
+
+    function cargarPeliculasYSalasMovil() {
+      $.when(
+        $.get(`${API_URL}/peliculas`),
+        $.get(`${API_URL}/salas`)
+      ).done(function (resPelis, resSalas) {
+        peliculasCacheMovil = resPelis[0];
+        salasCacheMovil = resSalas[0];
+        renderizarPeliculasMovil($("#buscador-peliculas-movil").val() || "");
+      });
+    }
+
+    function cargarComidasMovil() {
+      $.get(`${API_URL}/confiteria`, function (productos) {
+        const contenedor = $("#lista-comidas-movil");
+        contenedor.empty();
+        productos.forEach(prod => {
+          contenedor.append(`
+            <div class="card-movil">
+              <span class="badge-estado">${prod.categoria}</span>
+              <h4 style="color:#003366; margin: 8px 0 4px;">${prod.nombre}</h4>
+              <p style="font-weight:bold; color:#002244;">$${Number(prod.precio).toLocaleString()}</p>
+              <button class="ui-btn ui-mini ui-corner-all btn-azul-jqm" onclick="agregarItemMovil('${prod.nombre.replace(/'/g, "\\'")}', ${prod.precio})">
+                + Agregar al Carrito
+              </button>
+            </div>
+          `);
+        });
+      });
+    }
+
+    function renderizarCarritoMovil() {
+      const aviso = $("#aviso-usuario-carrito");
+      if (usuarioMovil) {
+        aviso.html(`👤 Comprando como: <strong style="color:#003366;">${usuarioMovil.nombre}</strong>`);
+      } else {
+        aviso.html(`🔒 <span style="color:#dc2626; font-weight:bold;">Debes iniciar sesión en "Cuenta" para confirmar tu pedido.</span>`);
+      }
+
+      const contenedor = $("#contenedor-carrito-movil");
+      contenedor.empty();
+      let total = 0;
+
+      if (carritoMovil.length === 0) {
+        contenedor.append('<div class="card-movil"><p>Tu carrito móvil está vacío.</p></div>');
+      } else {
+        carritoMovil.forEach((item, index) => {
+          total += item.precio;
+          contenedor.append(`
+            <div class="card-movil" style="display:flex; justify-content:space-between; align-items:center;">
+              <div>
+                <strong>${item.nombre}</strong><br/>
+                <span style="color:#003366;">$${item.precio.toLocaleString()}</span>
+              </div>
+              <button class="ui-btn ui-mini ui-corner-all" style="background:#dc2626; color:white; width:auto;" onclick="eliminarItemMovil(${index})">X</button>
+            </div>
+          `);
+        });
+      }
+      $("#total-carrito-movil").text(total.toLocaleString());
+    }
+
+    function eliminarItemMovil(index) {
+      carritoMovil.splice(index, 1);
+      actualizarContadoresCarrito();
+    }
+
+    function cargarHistorialMovil() {
+      if (!usuarioMovil) return;
+      $.get(`${API_URL}/usuarios/${usuarioMovil.id}/ventas`, function (ventas) {
+        const lista = $("#historial-movil-lista");
+        lista.empty();
+        if (ventas.length === 0) {
+          lista.append('<div class="card-movil"><p>Aún no tienes compras registradas.</p></div>');
+          return;
+        }
+        ventas.forEach(v => {
+          lista.append(`
+            <div class="card-movil" style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
+              <div>
+                <small style="color:#64748b;">Ticket #${v.id}</small><br/>
+                <strong>${v.detalle}</strong><br/>
+                <span style="color:#003366; font-weight:bold;">$${Number(v.total).toLocaleString()}</span>
+              </div>
+              <img src="https://api.qrserver.com/v1/create-qr-code/?size=70x70&data=CINEMINUTO-TICKET-${v.id}" alt="QR" style="border:2px solid #ffcc00; border-radius:4px;" />
+            </div>
+          `);
+        });
+      });
+    }
+
+    function actualizarVistaCuentaMovil() {
+      if (usuarioMovil) {
+        $("#zona-login-movil").hide();
+        $("#zona-sesion-activa").show();
+        $("#nombre-usuario-movil").text(usuarioMovil.nombre);
+        $("#correo-usuario-movil").text(usuarioMovil.correo);
+        $("#rol-usuario-movil").text(usuarioMovil.rol.toUpperCase());
+        cargarHistorialMovil();
+      } else {
+        $("#zona-sesion-activa").hide();
+        $("#zona-login-movil").show();
+      }
+      renderizarCarritoMovil();
+    }
+
+    $(document).ready(function () {
+      cargarPeliculasYSalasMovil();
+      cargarComidasMovil();
+      actualizarContadoresCarrito();
+      actualizarVistaCuentaMovil();
+
+      $("#buscador-peliculas-movil").on("input change", function () {
+        renderizarPeliculasMovil($(this).val());
+      });
+
+      $("#sillas-select-sala, #sillas-select-horario").change(consultarSillasMovil);
+
+      $("#btn-confirmar-sillas-movil").click(function () {
+        if (sillasElegidasMovil.length === 0) {
+          alert("Selecciona al menos una silla disponible.");
+          return;
+        }
+        const [salaNombre, precioStr] = $("#sillas-select-sala").val().split("|");
+        const horario = $("#sillas-select-horario").val();
+        const total = sillasElegidasMovil.length * Number(precioStr);
+
+        agregarItemMovil(
+          `Boleta: ${peliActualSillas.titulo} (${salaNombre} - ${horario} | Sillas: ${sillasElegidasMovil.join(", ")})`,
+          total,
+          {
+            pelicula_id: peliActualSillas.id,
+            sala_nombre: salaNombre,
+            horario: horario,
+            sillas: [...sillasElegidasMovil]
+          }
+        );
+        $.mobile.changePage("#page-cartelera");
+      });
+
+      $(document).on("pagebeforeshow", "#page-cartelera", cargarPeliculasYSalasMovil);
+      $(document).on("pagebeforeshow", "#page-comidas", cargarComidasMovil);
+      $(document).on("pagebeforeshow", "#page-carrito", renderizarCarritoMovil);
+      $(document).on("pagebeforeshow", "#page-cuenta", actualizarVistaCuentaMovil);
+
+      $("#toggle-modo-auth").click(function (e) {
+        e.preventDefault();
+        modoRegistroMovil = !modoRegistroMovil;
+        if (modoRegistroMovil) {
+          $("#titulo-auth-movil").text("Crear Cuenta");
+          $("#campo-nombre-registro").show();
+          $("#btn-submit-auth-movil").text("Registrarme");
+          $(this).text("¿Ya tienes cuenta? Inicia sesión");
+        } else {
+          $("#titulo-auth-movil").text("Iniciar Sesión");
+          $("#campo-nombre-registro").hide();
+          $("#btn-submit-auth-movil").text("Ingresar");
+          $(this).text("¿No tienes cuenta? Regístrate aquí");
+        }
+      });
+
+      $("#form-auth-movil").submit(function (e) {
+        e.preventDefault();
+        const nombre = $("#auth-nombre").val();
+        const correo = $("#auth-correo").val();
+        const password = $("#auth-password").val();
+
+        const endpoint = modoRegistroMovil ? "/usuarios/registro" : "/usuarios/login";
+        const payload = modoRegistroMovil
+          ? { nombre, correo, password, rol: correo === "admins@gmail.com" ? "admin" : "cliente" }
+          : { correo, password };
+
+        $.ajax({
+          url: `${API_URL}${endpoint}`,
+          method: "POST",
+          contentType: "application/json",
+          data: JSON.stringify(payload),
+          success: function (usuario) {
+            usuarioMovil = usuario;
+            localStorage.setItem("usuarioMovilCineMinuto", JSON.stringify(usuario));
+            actualizarVistaCuentaMovil();
+            alert(`Bienvenido, ${usuario.nombre}`);
+          },
+          error: function (xhr) {
+            alert(xhr.responseJSON?.detail || "Error de autenticación.");
+          }
+        });
+      });
+
+      $("#btn-cerrar-sesion-movil").click(function () {
+        usuarioMovil = null;
+        localStorage.removeItem("usuarioMovilCineMinuto");
+        actualizarVistaCuentaMovil();
+      });
+
+      // Pagar y reservar sillas persistentemente en PostgreSQL
+      $("#btn-pagar-movil").click(async function () {
+        if (!usuarioMovil) {
+          alert("Debes iniciar sesión en tu cuenta para realizar un pedido.");
+          $.mobile.changePage("#page-cuenta");
+          return;
+        }
+        if (carritoMovil.length === 0) {
+          alert("Agrega boletas o comidas antes de pagar.");
+          return;
+        }
+
+        try {
+          for (const item of carritoMovil) {
+            if (item.reservaSillas) {
+              await $.ajax({
+                url: `${API_URL}/sillas/reservar`,
+                method: "POST",
+                contentType: "application/json",
+                data: JSON.stringify({
+                  ...item.reservaSillas,
+                  usuario_id: usuarioMovil.id
+                })
+              });
+            }
+          }
+
+          const total = carritoMovil.reduce((acc, i) => acc + i.precio, 0);
+          const detalle = "[APP MÓVIL] " + carritoMovil.map(i => i.nombre).join(", ");
+
+          await $.ajax({
+            url: `${API_URL}/ventas`,
+            method: "POST",
+            contentType: "application/json",
+            data: JSON.stringify({
+              detalle: detalle,
+              total: total,
+              usuario_id: usuarioMovil.id
+            })
+          });
+
+          carritoMovil = [];
+          actualizarContadoresCarrito();
+          alert(`¡Compra realizada con éxito, ${usuarioMovil.nombre}! Tus sillas quedaron reservadas.`);
+        } catch (xhr) {
+          alert(xhr.responseJSON?.detail || "Error al procesar el pago o reservar las sillas.");
+        }
+      });
+    });
+  </script>
+</body>
+</html>
